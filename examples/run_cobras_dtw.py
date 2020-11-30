@@ -76,13 +76,13 @@ elif method == 2:
         cur_series = list(map(lambda idx: series[idx], cur_indices))
         series_mean = dba.performDBA(cur_series, 10)
         plt.plot(x, series_mean, color = cur_color)
-
+#dsa curve of the cluster
 else:
     cur_indices = []
     for super_instance in clustering.clusters[cluster_idx].super_instances:
         cur_indices.extend(super_instance.indices)
     cur_series = list(map(lambda idx: series[idx], cur_indices))
-    series_mean = dba.performDBA(cur_series, 10)
+    series_mean, series_variance = dba.performDBA(cur_series, 10)
     plt.plot(x, series_mean, color = 'purple')
 
 
