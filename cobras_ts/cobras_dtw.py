@@ -38,7 +38,10 @@ class COBRAS_DTW(COBRAS):
             closest_train.indices.extend(indices)
 
         si.children = training
-
+        # print("len of training : " + str(len(training)))
+        # for i in np.arange(0, len(training)):
+        #     print("training [" + str(i) + "] cnt : " + str(len(training[i].indices)))
+        # print("------------")
         return training
 
     def create_superinstance(self, indices, parent=None):
