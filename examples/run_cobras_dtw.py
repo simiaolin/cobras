@@ -78,6 +78,9 @@ def findSpecialIndices():
             special_indices.append(index)
     return special_indices
 
+    # adjust_series_mat          映射的value
+    # adjusted_series_weight_mat 往前映射的距离
+    # series_mapping_mat         当前映射的index
 def findAdjustedSeries(adjusted_series_mat, series_mapping_mat, adjusted_series_weight_mat, range):
     for i in np.arange(0, adjusted_series_mat.shape[0]):
         x = []
@@ -162,7 +165,7 @@ def plotSpecialCaseOverall(cur_indices):
 
 def plotOverall():
     cur_series = findAllSeriesWithIndices(findAllIndicesOfOneCluster(cluster_idx))
-    series_mean, series_dtw_horiz_var, series_dtw_vertic_var, series_vertic_var, adjusted_series_mat, series_mapping_mat, adjusted_series_weight_mat = dba.performDBA(cur_series, 3)
+    series_mean, series_dtw_horiz_var, series_dtw_vertic_var, series_vertic_var, adjusted_series_mat, series_mapping_mat, adjusted_series_weight_mat = dba.performDBA(cur_series, 50)
 
     plotDBA(ax1, series_mean)
     plotAllCurves(ax2)
@@ -183,19 +186,13 @@ def plotSelectedSpan(span_tuple):
 
 def main():
     # print(metrics.adjusted_rand_score(clustering.construct_cluster_labeling(),labels))
-    cluster_size = len(clustering.clusters)
-    print("cnt of clusters " + str(cluster_size))
-    for i in np.arange(0, cluster_size):
-        curIndices = findAllIndicesOfOneCluster(i)
-        curIndices.sort()
-        print("cluster id " + str(i) + " cluster indices" + str(curIndices))
 
 
     special_indices = findSpecialIndices()
     print(special_indices)
     # plotSpecialCaseOverall(special_indices)
-    plotSelectedSpan((70, 80))
+    # plotSelectedSpan((70, 80))
+    plotOverall()
     plt.show()
-z
 if __name__ == '__main__':
     main()
