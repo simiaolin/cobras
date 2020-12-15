@@ -119,7 +119,7 @@ def plotDSACurves():
 def plotDBA(plt, series_mean, range = None):
     if (range == None):
         plt.plot(x, series_mean, color='purple')
-    elif (range[0] == range[1]):
+    elif (range[0] + 1 == range[1]):
         plt.scatter(x[range[0]], series_mean[range[0]], color = 'purple')
     else:
         plt.plot(x[range[0]: range[1]], series_mean[range[0]: range[1]], color = 'purple')
@@ -140,7 +140,7 @@ def plotStatisticsCurve(plt, values, color, title, range = None) :
     plt.set_title(title)
     if (range == None):
         plt.plot(x, values, color=color)
-    elif (range[0] == range[1]):
+    elif (range[0] + 1 == range[1]):
         plt.scatter(x[range[0]], values[range[0]], color=color)
     else:
         plt.plot(x[range[0]: range[1]], values[range[0]: range[1]], color=color)
@@ -206,7 +206,8 @@ def plotSpecialSelectedSpan(span_tuple, cur_indices):
 
 def plotStatisticsCurves(series_dtw_horiz_var, series_dtw_vertic_var, series_vertic_var, series_dtw_special_vertic_var, span_tuple = None):
     y_start, y_end = getStatisticsLim([series_dtw_vertic_var, series_vertic_var, series_dtw_special_vertic_var], span_tuple)
-    setYLim([ax4, ax5, ax6], y_start, y_end)
+    y_start_stretched, y_end_stretched = stretchLim(y_start, y_end)
+    setYLim([ax4, ax5, ax6], y_start_stretched, y_end_stretched)
     plotStatisticsCurve(ax3, series_dtw_horiz_var, 'green', 'dtw_horizontal_standard_deviation', span_tuple)
     plotStatisticsCurve(ax4, series_dtw_vertic_var, 'red', 'dtw_vertical_standard_deviation', span_tuple)
     plotStatisticsCurve(ax5, series_vertic_var, 'grey' , 'vertical_standard_deviation', span_tuple)
@@ -217,7 +218,8 @@ def getSeriesLimForAx1AndAx2(series_mean, cur_series, span_tuple = None):
     selected_series_start, selected_series_end =  getCurSeriesLim(cur_series, span_tuple)
     start_ax1_ax2 = min(dba_start, selected_series_start)
     end_ax1_ax2 = max(dba_end, selected_series_end)
-    return start_ax1_ax2, end_ax1_ax2
+    start_ax1_ax2_stre, end_ax1_ax2_stre = stretchLim(start_ax1_ax2, end_ax1_ax2)
+    return start_ax1_ax2_stre, end_ax1_ax2_stre
 
 def getCurSeriesLim(cur_series, span_tuple = None):
     start = sys.float_info.max;
@@ -250,6 +252,18 @@ def setYLim(plts, y_start, y_end):
     for plt in plts:
         plt.set_ylim(y_start, y_end)
 
+def stretchLim(start, end):
+    if (start > 0):
+        start = start * 0.8
+    else:
+        start = start * 1.2
+    if (end > 0) :
+        end = end * 1.2
+    else:
+        end = end * 0.8
+
+    return start, end
+
 def main():
     # print(metrics.adjusted_rand_score(clustering.construct_cluster_labeling(),labels))
 
@@ -258,8 +272,8 @@ def main():
     # print(special_indices)
     # plotSpecialCaseOverall(special_indices)
     # plotSpecialSelectedSpan((85,95), special_indices)
-    # plotSelectedSpan((85, 95))
-    plotOverall()
+    plotSelectedSpan((92, 93))
+    # plotOverall()
     plt.show()
 if __name__ == '__main__':
     main()
