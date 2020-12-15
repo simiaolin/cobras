@@ -47,7 +47,7 @@ ax6.set_title('Normal Vertical Variance')
 
 plt.xlabel('idx')
 plt.ylabel('value')
-x = np.arange(1, 97)
+x = np.arange(0, 96)
 
 method = 3
 cluster_idx = 0
@@ -77,17 +77,6 @@ def findSpecialIndices():
         if specialCondition(series[index]):
             special_indices.append(index)
     return special_indices
-
-    # adjust_series_mat          映射的value
-    # adjusted_series_weight_mat 往前映射的距离
-    # series_mapping_mat         当前映射的index
-def findAdjustedSeries(adjusted_series_mat, series_mapping_mat, adjusted_series_weight_mat, range):
-    for i in np.arange(0, adjusted_series_mat.shape[0]):
-        x = []
-        y = []
-        for index in np.arange(range[0], range[1]):
-            x.append(series_mapping_mat[i, index])
-
 
 def getColorIter(size):
     color_arr = cm.rainbow(np.linspace(0, 1, size))
@@ -129,12 +118,16 @@ def plotDSACurves():
 def plotDBA(plt, series_mean, range = None):
     if (range == None):
         plt.plot(x, series_mean, color='purple')
+    elif (range[0] == range[1]):
+        plt.scatter(x[range[0]], series_mean[range[0]], color = 'purple')
     else:
         plt.plot(x[range[0]: range[1]], series_mean[range[0]: range[1]], color = 'purple')
 
 def plotDTWHorizontalCurve(plt, series_dtw_horiz_var, range = None):
     if (range == None):
         plt.plot(x, series_dtw_horiz_var, color='green')
+    elif (range[0] == range[1]):
+        plt.scatter(x[range[0]], series_dtw_horiz_var[range[0]], color='green')
     else:
         plt.plot(x[range[0] : range[1]], series_dtw_horiz_var[range[0] : range[1]], color='green')
 
@@ -142,6 +135,9 @@ def plotDTWHorizontalCurve(plt, series_dtw_horiz_var, range = None):
 def plotDTWVerticalCurve(plt, series_dtw_vertic_var, range = None):
     if (range == None):
         plt.plot(x, series_dtw_vertic_var, color='red')
+    elif (range[0] == range[1]):
+        print("lll " + str(series_dtw_vertic_var[range[0]]))
+        plt.scatter(x[range[0]], series_dtw_vertic_var[range[0]], color='red')
     else:
         plt.plot(x[range[0] : range[1]], series_dtw_vertic_var[range[0] : range[1]], color='red')
 
@@ -149,13 +145,29 @@ def plotDTWVerticalCurve(plt, series_dtw_vertic_var, range = None):
 def plotVerticalCurve(plt, series_vertic_var, range = None):
     if (range == None):
         plt.plot(x, series_vertic_var, color='grey')
+    elif (range[0] == range[1]):
+        plt.scatter(x[range[0]], series_vertic_var[range[0]], color='grey')
     else:
         plt.plot(x[range[0]: range[1]], series_vertic_var[range[0]: range[1]], color='grey')
+
+    # adjusted_series_weight_mat 往前映射的距离
+    # series_mapping_mat         当前映射的index
+def plotAdjustedSeries(plt, series_mapping_mat, adjusted_series_weight_mat, range, series):
+    colors = getColorIter(series_mapping_mat.shape[0])
+    for series_index in np.arange(0, series_mapping_mat.shape[0]):
+        end = series_mapping_mat[series_index, range[1]]
+        start = series_mapping_mat[series_index, range[0]] - adjusted_series_weight_mat[series_index, range[0]] + 1
+        x = np.arange(start, end + 1)
+        y = list(map(lambda  x: series[series_index][x], x))
+        if len(x) == 1:
+            plt.scatter(x, y, color=next(colors))
+        else:
+            plt.plot(x, y, color=next(colors))
 
 
 def plotSpecialCaseOverall(cur_indices):
     cur_series = findAllSeriesWithIndices(cur_indices)
-    series_mean, series_dtw_horiz_var, series_dtw_vertic_var, series_vertic_var = dba.performDBA(cur_series, 3)
+    series_mean, series_dtw_horiz_var, series_dtw_vertic_var, series_vertic_var, a, b, c = dba.performDBA(cur_series, 3)
     plotDBA(ax1, series_mean)
     plotMultiCurves(ax2, cur_indices, 'Series', True)
     plotDTWHorizontalCurve(ax4,series_dtw_horiz_var)
@@ -177,10 +189,21 @@ def plotOverall():
 
 def plotSelectedSpan(span_tuple):
     cur_series = findAllSeriesWithIndices(findAllIndicesOfOneCluster(cluster_idx))
-    series_mean, series_dtw_horiz_var, series_dtw_vertic_var, series_vertic_var, adjusted_series_mat, series_mapping_mat, adjusted_series_weight_mat = dba.performDBA(cur_series, 3)
+    series_mean, series_dtw_horiz_var, series_dtw_vertic_var, series_vertic_var, adjusted_series_mat, series_mapping_mat, adjusted_series_weight_mat = dba.performDBA(cur_series, 10)
     plotDBA(ax1, series_mean, span_tuple)
+    plotAdjustedSeries(ax2, series_mapping_mat, adjusted_series_weight_mat, span_tuple, series)
 
     plotDTWHorizontalCurve(ax4,series_dtw_horiz_var, span_tuple)
+    plotDTWVerticalCurve(ax5, series_dtw_vertic_var, span_tuple)
+    plotVerticalCurve(ax6, series_vertic_var, span_tuple)
+
+def plotSpecialSelectedSpan(span_tuple, cur_indices):
+    cur_series = findAllSeriesWithIndices(cur_indices)
+    series_mean, series_dtw_horiz_var, series_dtw_vertic_var, series_vertic_var,  adjusted_series_mat, series_mapping_mat, adjusted_series_weight_mat = dba.performDBA(cur_series, 3)
+    plotDBA(ax1, series_mean, span_tuple)
+    plotAdjustedSeries(ax2, series_mapping_mat, adjusted_series_weight_mat, span_tuple, cur_series)
+
+    plotDTWHorizontalCurve(ax4, series_dtw_horiz_var, span_tuple)
     plotDTWVerticalCurve(ax5, series_dtw_vertic_var, span_tuple)
     plotVerticalCurve(ax6, series_vertic_var, span_tuple)
 
@@ -191,8 +214,9 @@ def main():
     special_indices = findSpecialIndices()
     print(special_indices)
     # plotSpecialCaseOverall(special_indices)
-    # plotSelectedSpan((70, 80))
-    plotOverall()
+    plotSpecialSelectedSpan((92,92), special_indices)
+    # plotSelectedSpan((92, 92))
+    # plotOverall()
     plt.show()
 if __name__ == '__main__':
     main()
