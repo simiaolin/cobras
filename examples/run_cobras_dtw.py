@@ -44,7 +44,7 @@ ax6 = fig.add_subplot(236, sharex = ax1, sharey = ax4)
 ax1.set_title('DBA')
 plt.xlabel('idx')
 plt.ylabel('value')
-x = np.arange(0, 96)
+x = np.arange(0, series.shape[1])
 
 method = 3
 cluster_idx = 0
@@ -163,7 +163,10 @@ def plotAdjustedSeries(plt, series_mapping_mat, adjusted_series_weight_mat, rang
             plt.scatter(x, y, color=next(colors))
         else:
             plt.plot(x, y, color=next(colors))
-
+        expected_range = np.arange(range[0], range[1])
+        non_plotted_range = [item for item in expected_range if item not in x]
+        for non_plotted_dot in non_plotted_range:
+            plt.scatter(non_plotted_dot, series[series_index][non_plotted_dot], color = 'black')
 
 def plotSpecialCaseOverall(cur_indices):
     cur_series = findAllSeriesWithIndices(cur_indices)
@@ -185,7 +188,7 @@ def plotOverallQuick():
     plotStatisticsCurves(series_dtw_horiz_var, series_dtw_vertic_var, series_vertic_var, series_dtw_special_vertic_var)
 
 def plotOverallSlow():
-    plotSelectedSpan((0,96))
+    plotSelectedSpan((0,series.shape[1]))
 
 def plotSelectedSpan(span_tuple):
     cur_series = findAllSeriesWithIndices(findAllIndicesOfOneCluster(cluster_idx))
