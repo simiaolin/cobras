@@ -36,16 +36,12 @@ clustering, intermediate_clusterings, runtimes, ml, cl = clusterer.cluster()
 
 fig = plt.figure()
 ax1 = fig.add_subplot(231)
-ax2 = fig.add_subplot(232)
-ax3 = fig.add_subplot(233)
-ax4 = fig.add_subplot(234)
-ax5 = fig.add_subplot(235)
-ax6 = fig.add_subplot(236)
+ax2 = fig.add_subplot(232, sharex = ax1, sharey = ax1)
+ax3 = fig.add_subplot(233,  sharex = ax1)
+ax4 = fig.add_subplot(234, sharex = ax1)
+ax5 = fig.add_subplot(235, sharex = ax1, sharey = ax4 )
+ax6 = fig.add_subplot(236, sharex = ax1, sharey = ax4)
 ax1.set_title('DBA')
-# ax4.set_title('DTW Horizontal Variance')
-# ax5.set_title('DTW Vertical Variance')
-# ax6.set_title('Normal Vertical Variance')
-
 plt.xlabel('idx')
 plt.ylabel('value')
 x = np.arange(0, 96)
@@ -102,11 +98,6 @@ def plotAllCurves(plt):
     indices_of_current_cluster = findAllIndicesOfOneCluster(cluster_idx)
     plotMultiCurves(plt, indices_of_current_cluster, 'Series')
 
-def plotRepresentativeCurves(plt):
-    representative_indices_of_current_cluster = list(map(lambda superinstance: superinstance.representative_idx, clustering.clusters[cluster_idx].super_instances))
-    plotMultiCurves(plt, representative_indices_of_current_cluster, 'Representative Series')
-
-
 def plotDSACurves():
     colors = getColorIter(len(clustering.clusters[cluster_idx].super_instances))
     for super_instance in clustering.clusters[cluster_idx].super_instances:
@@ -123,6 +114,17 @@ def plotDBA(plt, series_mean, range = None):
         plt.scatter(x[range[0]], series_mean[range[0]], color = 'purple')
     else:
         plt.plot(x[range[0]: range[1]], series_mean[range[0]: range[1]], color = 'purple')
+
+def plotDeviationAroundDBA(ax1, series_mean, series_vertic_var, range = None):
+    lower = series_mean - series_vertic_var
+    upper = series_mean + series_vertic_var
+    real_x = x
+    if range != None:
+        real_x = x[range[0] : range[1]]
+        lower = lower[range[0] : range[1]]
+        upper = upper[range[0]: range[1]]
+    ax1.fill_between(real_x, lower, upper, alpha=0.1)
+
 
 def plotDTWHorizontalCurve(plt, series_dtw_horiz_var, range = None):
     plotStatisticsCurve(plt, series_dtw_horiz_var, 'green', range)
@@ -148,12 +150,14 @@ def plotStatisticsCurve(plt, values, color, title, range = None) :
 
     # adjusted_series_weight_mat 往前映射的距离
     # series_mapping_mat         当前映射的index
+    # 注意range是[ a, b )
 def plotAdjustedSeries(plt, series_mapping_mat, adjusted_series_weight_mat, range, series):
     colors = getColorIter(series_mapping_mat.shape[0])
     for series_index in np.arange(0, series_mapping_mat.shape[0]):
-        end = series_mapping_mat[series_index, range[1]]
-        start = series_mapping_mat[series_index, range[0]] - adjusted_series_weight_mat[series_index, range[0]] + 1
-        x = np.arange(start, end + 1)
+        s1, e1 = dba.getStartAndEndMapping(series_mapping_mat, adjusted_series_weight_mat, series_index, range[1] - 1)
+        s2, e2 = dba.getStartAndEndMapping(series_mapping_mat, adjusted_series_weight_mat, series_index, range[0])
+
+        x = np.arange(s2, e1)
         y = list(map(lambda  x: series[series_index][x], x))
         if len(x) == 1:
             plt.scatter(x, y, color=next(colors))
@@ -171,27 +175,26 @@ def plotSpecialCaseOverall(cur_indices):
     plotVerticalCurve(ax6, series_vertic_var)
 
 
-def plotOverall():
+def plotOverallQuick():
     cur_series = findAllSeriesWithIndices(findAllIndicesOfOneCluster(cluster_idx))
     series_mean, series_dtw_horiz_var, series_dtw_vertic_var, series_vertic_var, adjusted_series_mat, series_mapping_mat, adjusted_series_weight_mat, series_dtw_special_vertic_var = dba.performDBA(cur_series, 1)
 
-    start_ax1_ax2, end_ax1_ax2 = getSeriesLimForAx1AndAx2(series_mean, cur_series)
-    setYLim([ax1, ax2], start_ax1_ax2, end_ax1_ax2)
     plotDBA(ax1, series_mean)
     plotAllCurves(ax2)
 
     plotStatisticsCurves(series_dtw_horiz_var, series_dtw_vertic_var, series_vertic_var, series_dtw_special_vertic_var)
 
-
+def plotOverallSlow():
+    plotSelectedSpan((0,96))
 
 def plotSelectedSpan(span_tuple):
     cur_series = findAllSeriesWithIndices(findAllIndicesOfOneCluster(cluster_idx))
     series_mean, series_dtw_horiz_var, series_dtw_vertic_var, series_vertic_var, adjusted_series_mat, series_mapping_mat, adjusted_series_weight_mat, series_dtw_special_vertic_var = dba.performDBA(cur_series, 1)
 
-    start_ax1_ax2, end_ax1_ax2 = getSeriesLimForAx1AndAx2(series_mean, cur_series, span_tuple)
-    setYLim([ax1, ax2], start_ax1_ax2, end_ax1_ax2)
     plotDBA(ax1, series_mean, span_tuple)
-    plotAdjustedSeries(ax2, series_mapping_mat, adjusted_series_weight_mat, span_tuple, series)
+    plotDeviationAroundDBA(ax1, series_mean, series_vertic_var, span_tuple)
+
+    plotAdjustedSeries(ax2, series_mapping_mat, adjusted_series_weight_mat, span_tuple, cur_series)
 
     plotStatisticsCurves(series_dtw_horiz_var, series_dtw_vertic_var, series_vertic_var, series_dtw_special_vertic_var, span_tuple)
 
@@ -205,64 +208,14 @@ def plotSpecialSelectedSpan(span_tuple, cur_indices):
 
 
 def plotStatisticsCurves(series_dtw_horiz_var, series_dtw_vertic_var, series_vertic_var, series_dtw_special_vertic_var, span_tuple = None):
-    y_start, y_end = getStatisticsLim([series_dtw_vertic_var, series_vertic_var, series_dtw_special_vertic_var], span_tuple)
-    y_start_stretched, y_end_stretched = stretchLim(y_start, y_end)
-    setYLim([ax4, ax5, ax6], y_start_stretched, y_end_stretched)
     plotStatisticsCurve(ax3, series_dtw_horiz_var, 'green', 'dtw_horizontal_standard_deviation', span_tuple)
     plotStatisticsCurve(ax4, series_dtw_vertic_var, 'red', 'dtw_vertical_standard_deviation', span_tuple)
     plotStatisticsCurve(ax5, series_vertic_var, 'grey' , 'vertical_standard_deviation', span_tuple)
     plotStatisticsCurve(ax6, series_dtw_special_vertic_var, 'purple', 'dtw_special_vertical_standard_deviation', span_tuple)
 
-def getSeriesLimForAx1AndAx2(series_mean, cur_series, span_tuple = None):
-    dba_start, dba_end = getStatisticsLim([series_mean], span_tuple)
-    selected_series_start, selected_series_end =  getCurSeriesLim(cur_series, span_tuple)
-    start_ax1_ax2 = min(dba_start, selected_series_start)
-    end_ax1_ax2 = max(dba_end, selected_series_end)
-    start_ax1_ax2_stre, end_ax1_ax2_stre = stretchLim(start_ax1_ax2, end_ax1_ax2)
-    return start_ax1_ax2_stre, end_ax1_ax2_stre
 
-def getCurSeriesLim(cur_series, span_tuple = None):
-    start = sys.float_info.max;
-    end = sys.float_info.min;
-    for series in cur_series:
-        if span_tuple != None:
-            series = series[span_tuple[0] : span_tuple[1]]
-        for value in series:
-            if value < start:
-                start = value
-            if value >  end:
-                end = value
 
-    return start, end
 
-def getStatisticsLim(var_list, span_tuple):
-    start = sys.float_info.max;
-    end = sys.float_info.min;
-    for var in var_list:
-        if span_tuple != None:
-            var = var[span_tuple[0] : span_tuple[1]]
-        for single_var in var:
-            if single_var <  start:
-                start = single_var
-            if single_var > end:
-                end = single_var
-    return start, end
-
-def setYLim(plts, y_start, y_end):
-    for plt in plts:
-        plt.set_ylim(y_start, y_end)
-
-def stretchLim(start, end):
-    if (start > 0):
-        start = start * 0.8
-    else:
-        start = start * 1.2
-    if (end > 0) :
-        end = end * 1.2
-    else:
-        end = end * 0.8
-
-    return start, end
 
 def main():
     # print(metrics.adjusted_rand_score(clustering.construct_cluster_labeling(),labels))
@@ -272,8 +225,16 @@ def main():
     # print(special_indices)
     # plotSpecialCaseOverall(special_indices)
     # plotSpecialSelectedSpan((85,95), special_indices)
-    plotSelectedSpan((92, 93))
-    # plotOverall()
+    plotSelectedSpan(( 90, 91))
+    # plotOverallSlow()
     plt.show()
 if __name__ == '__main__':
     main()
+
+
+# deprecated
+def plotRepresentativeCurves(plt):
+    representative_indices_of_current_cluster = list(map(lambda superinstance: superinstance.representative_idx,
+                                                         clustering.clusters[cluster_idx].super_instances))
+    plotMultiCurves(plt, representative_indices_of_current_cluster, 'Representative Series')
+
