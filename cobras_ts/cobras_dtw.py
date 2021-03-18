@@ -6,6 +6,13 @@ from cobras_ts.cobras import COBRAS
 
 
 class COBRAS_DTW(COBRAS):
+    def checkCL(self, split_labels):
+        for cl in self.cl:
+            l = cl[0]
+            r = cl[1]
+            if l < split_labels.size and r < split_labels.size :
+                if split_labels[l] == split_labels[r]:
+                    print("wow : " + str(l) + " " +  str(r))
 
     def split_superinstance(self, si, k):
         """
@@ -19,7 +26,7 @@ class COBRAS_DTW(COBRAS):
         labels_to_indices = []
         for label in set(split_labels):
             labels_to_indices.append(np.where(split_labels == label))
-
+        self.checkCL(split_labels)
         training = []
         no_training = []
 

@@ -283,7 +283,7 @@ class COBRAS(abc.ABC):
             merged = False
             for x, y in cluster_pairs:
 
-                if x.cannot_link_to_other_cluster(y, self.cl):
+                if x.cannot_link_to_other_cluster(y, self.cl):       #never visit this line of code, should be removed
                     continue
 
                 bc1, bc2 = x.get_comparison_points(y)
